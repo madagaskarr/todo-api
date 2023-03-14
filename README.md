@@ -19,7 +19,7 @@ A simple RESTful Task Manager API built using Node.js, Express, and MongoDB.
 
 1.  Clone the repository:
 
-`git clone https://github.com/yourusername/task-manager-api.git` 
+`git@github.com:Gevorg91/todo-api.git` 
 
 2.  Install dependencies:
 
