@@ -1,0 +1,5 @@
+{
+    "MONGO_URI": "mongodb://localhost/todo_db",
+    "NODE_ENV": "development",
+    "JWT_SECRET": "1111"
+}
