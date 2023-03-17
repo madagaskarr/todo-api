@@ -1,65 +1,67 @@
 const Task = require('../models/taskModel');
+const {errorFactory} = require('../utils/errorHandler');
+const {sendResponse} = require('../utils/responseHandler');
+const {StatusCodes} = require("../utils/statusCodes");
 
-exports.createTask = async (req, res) => {
+exports.createTask = async (req, res, next) => {
     try {
-        const task = new Task({ ...req.body, user: req.user.id });
+        const task = new Task({...req.body, user: req.user.id});
         const savedTask = await task.save();
-        res.status(201).json(formatTaskResponse(savedTask));
+        sendResponse(res, StatusCodes.CREATED, formatTaskResponse(savedTask));
     } catch (err) {
-        res.status(500).send({ message: err.message });
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
-
-exports.getTasks = async (req, res) => {
+exports.getTasks = async (req, res, next) => {
     try {
-        const tasks = await Task.find({ user: req.user });
-        res.json(tasks.map(formatTaskResponse));
+        const tasks = await Task.find({user: req.user});
+        sendResponse(res, StatusCodes.OK, tasks.map(formatTaskResponse));
     } catch (err) {
-        res.status(500).send({ message: err.message });
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
-exports.getTask = async (req, res) => {
+exports.getTask = async (req, res, next) => {
     try {
-        const task = await Task.findOne({ _id: req.params.id, user: req.user.id });
+        const task = await Task.findOne({_id: req.params.id, user: req.user.id});
         if (!task) {
-            res.status(404).send({ message: 'Task not found.' });
+            next(errorFactory(StatusCodes.NOT_FOUND));
         } else {
-            res.json(formatTaskResponse(task));
+            sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
         }
     } catch (err) {
-        res.status(500).send({ message: err.message });
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
-exports.updateTask = async (req, res) => {
+exports.updateTask = async (req, res, next) => {
     try {
         const task = await Task.findOneAndUpdate(
-            { _id: req.params.id, user: req.user.id },
+            {_id: req.params.id, user: req.user.id},
             req.body,
-            { new: true }
+            {new: true}
         );
         if (!task) {
-            res.status(404).send({ message: 'Task not found.' });
+            next(errorFactory(StatusCodes.NOT_FOUND, 'Task not found'));
         } else {
-            res.json(formatTaskResponse(task));
+            sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
         }
     } catch (err) {
-        res.status(500).send({ message: err.message });
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR, err.message));
     }
 };
 
-exports.deleteTask = async (req, res) => {
+exports.deleteTask = async (req, res, next) => {
     try {
-        const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+        const task = await Task.findOneAndDelete({_id: req.params.id, user: req.user.id});
         if (!task) {
-            res.status(404).send({ message: 'Task not found.' });
+            next(errorFactory(StatusCodes.NOT_FOUND));
         } else {
-            res.json({ message: 'Task deleted successfully.', task: formatTaskResponse(task) });
+            sendResponse(res, StatusCodes.OK, formatTaskResponse(task))
         }
     } catch (err) {
-        res.status(500).send({ message: err.message });
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 

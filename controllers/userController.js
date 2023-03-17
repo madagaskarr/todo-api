@@ -1,6 +1,9 @@
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const config = require('config');
+const {errorFactory} = require('../utils/errorHandler');
+const {sendResponse} = require('../utils/responseHandler');
+const {StatusCodes} = require('../utils/statusCodes');
 
 
 function generateAccessToken(user) {
@@ -13,13 +16,13 @@ function generateRefreshToken(user) {
     return jwt.sign(payload, config.JWT_REFRESH_SECRET, {expiresIn: '10d'});
 }
 
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
     const {username, password} = req.body;
 
     try {
         let user = await User.findOne({username});
         if (user) {
-            return res.status(400).json({message: 'User already exists'});
+            next(errorFactory(StatusCodes.BAD_REQUEST, 'User already exists'));
         }
 
         user = new User({username, password});
@@ -28,42 +31,44 @@ exports.register = async (req, res) => {
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
 
-        res.status(201).json({accessToken, refreshToken});
+        let resData = formatUserResponse(user, accessToken, refreshToken);
+        sendResponse(res, StatusCodes.CREATED, resData);
     } catch (err) {
-        res.status(500).send({message: err.message});
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
     const {username, password} = req.body;
 
     try {
         const user = await User.findOne({username});
 
         if (!user) {
-            return res.status(400).json({message: 'Invalid username or password'});
+            next(errorFactory(StatusCodes.BAD_REQUEST, 'Invalid username or password'));
         }
         const isMatch = await user.comparePassword(password);
 
         if (!isMatch) {
-            return res.status(400).json({message: 'Invalid username or password'});
+            next(errorFactory(StatusCodes.BAD_REQUEST, 'Invalid username or password'));
         }
 
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
 
-        res.status(200).json({accessToken, refreshToken});
+        let resData = formatUserResponse(user, accessToken, refreshToken);
+        sendResponse(res, StatusCodes.OK, resData);
     } catch (err) {
-        res.status(500).send({message: err.message});
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
-exports.refreshToken = async (req, res) => {
+exports.refreshToken = async (req, res, next) => {
     const {refreshToken} = req.body;
 
     if (!refreshToken) {
-        return res.status(401).json({message: 'No refresh token, authorization denied'});
+        next(errorFactory(StatusCodes.UNAUTHORIZED, 'No refresh token, authorization denied'));
     }
 
     try {
@@ -76,8 +81,20 @@ exports.refreshToken = async (req, res) => {
 
         const newAccessToken = generateAccessToken(user);
 
-        res.status(200).json({accessToken: newAccessToken, refreshToken});
+        let resData = formatUserResponse(user, newAccessToken, refreshToken);
+        sendResponse(res, StatusCodes.OK, resData);
     } catch (err) {
-        res.status(401).json({message: 'Invalid refresh token'});
+        next(errorFactory(StatusCodes.UNAUTHORIZED, 'Invalid refresh token'));
     }
 };
+
+
+function formatUserResponse(user, accessToken, refreshToken) {
+    return {
+        id: user._id,
+        username: user.username,
+        createdAt: user.createdAt,
+        accessToken: accessToken,
+        refreshToken: refreshToken
+    };
+}
