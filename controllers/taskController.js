@@ -4,16 +4,17 @@ exports.createTask = async (req, res) => {
     try {
         const task = new Task({ ...req.body, user: req.user.id });
         const savedTask = await task.save();
-        res.status(201).json(savedTask);
+        res.status(201).json(formatTaskResponse(savedTask));
     } catch (err) {
         res.status(500).send({ message: err.message });
     }
 };
 
+
 exports.getTasks = async (req, res) => {
     try {
         const tasks = await Task.find({ user: req.user });
-        res.json(tasks);
+        res.json(tasks.map(formatTaskResponse));
     } catch (err) {
         res.status(500).send({ message: err.message });
     }
@@ -25,7 +26,7 @@ exports.getTask = async (req, res) => {
         if (!task) {
             res.status(404).send({ message: 'Task not found.' });
         } else {
-            res.json(task);
+            res.json(formatTaskResponse(task));
         }
     } catch (err) {
         res.status(500).send({ message: err.message });
@@ -42,7 +43,7 @@ exports.updateTask = async (req, res) => {
         if (!task) {
             res.status(404).send({ message: 'Task not found.' });
         } else {
-            res.json(task);
+            res.json(formatTaskResponse(task));
         }
     } catch (err) {
         res.status(500).send({ message: err.message });
@@ -55,9 +56,21 @@ exports.deleteTask = async (req, res) => {
         if (!task) {
             res.status(404).send({ message: 'Task not found.' });
         } else {
-            res.json({ message: 'Task deleted successfully.' });
+            res.json({ message: 'Task deleted successfully.', task: formatTaskResponse(task) });
         }
     } catch (err) {
         res.status(500).send({ message: err.message });
     }
 };
+
+function formatTaskResponse(task) {
+    return {
+        id: task._id,
+        title: task.title,
+        description: task.description,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        completed: task.completed,
+        user: task.user,
+    };
+}
