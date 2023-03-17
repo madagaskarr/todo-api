@@ -12,4 +12,10 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
 
 const PORT = config.get('PORT');
-app.listen(PORT, () => console.log(`Server running on port ${PORT} in ${config.get('NODE_ENV')} mode`));
+app.listen(PORT, (error) => {
+    if (error) {
+        console.error('Failed to start server:', error);
+    } else {
+        console.log(`Server running on port ${PORT} in ${config.get('NODE_ENV')} mode`);
+    }
+});

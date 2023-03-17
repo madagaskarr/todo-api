@@ -2,15 +2,13 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const config = require('config');
 
-const auth = async (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     try {
         const token = req.header('Authorization').replace('Bearer ', '');
         const decoded = jwt.verify(token, config.get('JWT_SECRET'));
         const user = await User.findById(decoded.user.id);
 
-        if (!user) {
-            throw new Error('User not found');
-        }
+        if (!user) throw new Error('User not found');
 
         req.user = user;
         req.token = token;
@@ -20,4 +18,4 @@ const auth = async (req, res, next) => {
     }
 };
 
-module.exports = auth;
+module.exports = authMiddleware;
