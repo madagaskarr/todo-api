@@ -4,6 +4,7 @@ const config = require('config');
 const {errorFactory} = require('../utils/errorHandler');
 const {sendResponse} = require('../utils/responseHandler');
 const {StatusCodes} = require('../utils/statusCodes');
+const {DbConnectionError, AuthenticationError, InternalServerError} = require("../error/errorTypes");
 
 
 function generateAccessToken(user) {
@@ -22,7 +23,7 @@ exports.register = async (req, res, next) => {
     try {
         let user = await User.findOne({username});
         if (user) {
-            next(errorFactory(StatusCodes.BAD_REQUEST, 'User already exists'));
+            next(new AuthenticationError("User already exists"));
         }
 
         user = new User({username, password});
@@ -34,7 +35,7 @@ exports.register = async (req, res, next) => {
         let resData = formatUserResponse(user, accessToken, refreshToken);
         sendResponse(res, StatusCodes.CREATED, resData);
     } catch (err) {
-        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
+        next(new InternalServerError(err));
     }
 };
 
