@@ -2,8 +2,14 @@ const Task = require('../models/taskModel');
 const {errorFactory} = require('../utils/errorHandler');
 const {sendResponse} = require('../utils/responseHandler');
 const {StatusCodes} = require("../utils/statusCodes");
+const {validationResult} = require("express-validator");
 
 exports.createTask = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+    }
+
     try {
         const task = new Task({...req.body, user: req.user.id});
         const savedTask = await task.save();
@@ -26,7 +32,7 @@ exports.getTask = async (req, res, next) => {
     try {
         const task = await Task.findOne({_id: req.params.id, user: req.user.id});
         if (!task) {
-            next(errorFactory(StatusCodes.NOT_FOUND));
+            return next(errorFactory(StatusCodes.NOT_FOUND));
         } else {
             sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
         }
@@ -36,6 +42,11 @@ exports.getTask = async (req, res, next) => {
 };
 
 exports.updateTask = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+    }
+
     try {
         const task = await Task.findOneAndUpdate(
             {_id: req.params.id, user: req.user.id},
@@ -43,7 +54,7 @@ exports.updateTask = async (req, res, next) => {
             {new: true}
         );
         if (!task) {
-            next(errorFactory(StatusCodes.NOT_FOUND, 'Task not found'));
+            return next(errorFactory(StatusCodes.NOT_FOUND, 'Task not found'));
         } else {
             sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
         }
@@ -56,7 +67,7 @@ exports.deleteTask = async (req, res, next) => {
     try {
         const task = await Task.findOneAndDelete({_id: req.params.id, user: req.user.id});
         if (!task) {
-            next(errorFactory(StatusCodes.NOT_FOUND));
+            return next(errorFactory(StatusCodes.NOT_FOUND));
         } else {
             sendResponse(res, StatusCodes.OK, formatTaskResponse(task))
         }

@@ -4,6 +4,7 @@ const config = require('config');
 const {errorFactory} = require('../utils/errorHandler');
 const {sendResponse} = require('../utils/responseHandler');
 const {StatusCodes} = require('../utils/statusCodes');
+const {validationResult} = require("express-validator");
 
 
 function generateAccessToken(user) {
@@ -17,12 +18,17 @@ function generateRefreshToken(user) {
 }
 
 exports.register = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+    }
+
     const {username, password} = req.body;
 
     try {
         let user = await User.findOne({username});
         if (user) {
-            next(errorFactory(StatusCodes.BAD_REQUEST, 'User already exists'));
+            return next(errorFactory(StatusCodes.BAD_REQUEST, 'User already exists'));
         }
 
         user = new User({username, password});
@@ -40,18 +46,23 @@ exports.register = async (req, res, next) => {
 
 
 exports.login = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+    }
+
     const {username, password} = req.body;
 
     try {
         const user = await User.findOne({username});
 
         if (!user) {
-            next(errorFactory(StatusCodes.BAD_REQUEST, 'Invalid username or password'));
+            return next(errorFactory(StatusCodes.BAD_REQUEST, 'Invalid username or password'));
         }
         const isMatch = await user.comparePassword(password);
 
         if (!isMatch) {
-            next(errorFactory(StatusCodes.BAD_REQUEST, 'Invalid username or password'));
+            return next(errorFactory(StatusCodes.BAD_REQUEST, 'Invalid username or password'));
         }
 
         const accessToken = generateAccessToken(user);
@@ -65,10 +76,15 @@ exports.login = async (req, res, next) => {
 };
 
 exports.refreshToken = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+    }
+
     const {refreshToken} = req.body;
 
     if (!refreshToken) {
-        next(errorFactory(StatusCodes.UNAUTHORIZED, 'No refresh token, authorization denied'));
+        return next(errorFactory(StatusCodes.UNAUTHORIZED, 'No refresh token, authorization denied'));
     }
 
     try {
