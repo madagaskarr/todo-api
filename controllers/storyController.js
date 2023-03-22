@@ -1,33 +1,33 @@
-const Task = require('../models/taskModel');
+const Story = require('../models/storyModel');
 const {errorFactory} = require('../utils/errorHandler');
 const {sendResponse} = require('../utils/responseHandler');
 const {StatusCodes} = require("../utils/statusCodes");
 const {validationResult} = require("express-validator");
 
-exports.createTask = async (req, res, next) => {
+exports.createStory = async (req, res, next) => {
     validateRequest(req, next)
 
     try {
-        const task = new Task({...allowedUpdates(req.body), user: req.user.id});
-        const savedTask = await task.save();
-        sendResponse(res, StatusCodes.CREATED, formatTaskResponse(savedTask));
+        const story = new Story({...allowedUpdates(req.body), user: req.user.id});
+        const savedStory = await task.save();
+        sendResponse(res, StatusCodes.CREATED, formatTaskResponse(savedStory));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
-exports.getTasks = async (req, res, next) => {
+exports.getStory = async (req, res, next) => {
     try {
-        const tasks = await Task.find({user: req.user});
+        const tasks = await Story.find({user: req.user});
         sendResponse(res, StatusCodes.OK, tasks.map(formatTaskResponse));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
-exports.getTask = async (req, res, next) => {
+exports.getStory = async (req, res, next) => {
     try {
-        const task = await Task.findOne({_id: req.params.id, user: req.user.id});
+        const task = await Story.findOne({_id: req.params.id, user: req.user.id});
         if (!task) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
         } else {
@@ -38,32 +38,32 @@ exports.getTask = async (req, res, next) => {
     }
 };
 
-exports.updateTask = async (req, res, next) => {
+exports.updateStory = async (req, res, next) => {
     validateRequest(req, next)
 
     try {
-        const task = await Task.findOneAndUpdate(
+        const task = await Story.findOneAndUpdate(
             {_id: req.params.id, user: req.user.id},
             {$set: allowedUpdates(req.body)},
             {new: true}
         );
-        if (!task) {
-            return next(errorFactory(StatusCodes.NOT_FOUND, 'Task not found'));
+        if (!story) {
+            return next(errorFactory(StatusCodes.NOT_FOUND, 'Story is not found'));
         }
-        await task.save();
-        sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
+        await story.save();
+        sendResponse(res, StatusCodes.OK, formatTaskResponse(story));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR, err.message));
     }
 };
 
-exports.deleteTask = async (req, res, next) => {
+exports.deleteStory = async (req, res, next) => {
     try {
-        const task = await Task.findOneAndDelete({_id: req.params.id, user: req.user.id});
+        const task = await Story.findOneAndDelete({_id: req.params.id, user: req.user.id});
         if (!task) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
         } else {
-            sendResponse(res, StatusCodes.OK, formatTaskResponse(task))
+            sendResponse(res, StatusCodes.OK, formatTaskResponse(story))
         }
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
@@ -77,18 +77,16 @@ function validateRequest(req, next) {
     }
 }
 
-function formatTaskResponse(task) {
+function formatTaskResponse(story) {
     return {
-        id: task._id,
-        title: task.title,
-        description: task.description,
-        completed: task.completed,
-        user: task.user,
+        id: story._id,
+        title: story.title,
+        user: story.user,
     };
 }
 
 const allowedUpdates = (body) => {
-    const allowedFields = ['title', 'description', 'completed'];
+    const allowedFields = ['title'];
     const updates = {};
 
     for (const field of allowedFields) {
@@ -98,4 +96,3 @@ const allowedUpdates = (body) => {
     }
 
     return updates;
-};
