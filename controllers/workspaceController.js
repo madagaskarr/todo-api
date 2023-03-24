@@ -5,7 +5,10 @@ const {sendResponse} = require("../utils/responseHandler");
 const {Workspace, RoleEnum} = require('../models/workspaceModel');
 
 exports.createWorkspace = async (req, res, next) => {
-    validateRequest(req, next);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+    }
 
     try {
         const workspace = new Workspace({name: req.body.name, owner: req.user.id});
@@ -18,7 +21,6 @@ exports.createWorkspace = async (req, res, next) => {
 };
 
 exports.getWorkspaces = async (req, res, next) => {
-
     const {filter} = req.query;
     let filterObj;
     switch (filter) {
@@ -45,7 +47,6 @@ exports.getWorkspaces = async (req, res, next) => {
 };
 
 exports.getWorkspace = async (req, res, next) => {
-
     try {
         const workspace = await Workspace.findOne({
             _id: req.params.id,
@@ -63,7 +64,10 @@ exports.getWorkspace = async (req, res, next) => {
 };
 
 exports.updateWorkspace = async (req, res, next) => {
-    validateRequest(req, next);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+    }
 
     try {
         const workspace = await Workspace.findOne({
@@ -86,7 +90,6 @@ exports.updateWorkspace = async (req, res, next) => {
 };
 
 exports.deleteWorkspace = async (req, res, next) => {
-
     try {
         const workspace = await Workspace.findOneAndDelete({_id: req.params.id, user: req.user.id});
         if (!workspace) {
@@ -98,13 +101,6 @@ exports.deleteWorkspace = async (req, res, next) => {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
-
-function validateRequest(req, next) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
-    }
-}
 
 function formatTaskResponse(workspace) {
     return {

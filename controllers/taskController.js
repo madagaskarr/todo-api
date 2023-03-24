@@ -3,14 +3,25 @@ const {errorFactory} = require('../utils/errorHandler');
 const {sendResponse} = require('../utils/responseHandler');
 const {StatusCodes} = require("../utils/statusCodes");
 const {validationResult} = require("express-validator");
+const taskService = require("../services/taskService")
 
 exports.createTask = async (req, res, next) => {
-    validateRequest(req, next)
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+    }
 
     try {
-        const task = new Task({...allowedUpdates(req.body), user: req.user.id});
-        const savedTask = await task.save();
-        sendResponse(res, StatusCodes.CREATED, formatTaskResponse(savedTask));
+        const {title, description, completed, workspace} = req.body;
+
+        const taskData = {
+            title,
+            description,
+            completed,
+            workspace
+        };
+        const task = await taskService.createTask(req.user.id, taskData);
+        sendResponse(res, StatusCodes.CREATED, formatTaskResponse(task));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
@@ -27,75 +38,68 @@ exports.getTasks = async (req, res, next) => {
 
 exports.getTask = async (req, res, next) => {
     try {
-        const task = await Task.findOne({_id: req.params.id, user: req.user.id});
+        const {id} = req.params;
+        const task = await taskService.getTask(id, req.user.id);
+
         if (!task) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
-        } else {
-            sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
         }
+
+        sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
 exports.updateTask = async (req, res, next) => {
-    validateRequest(req, next)
-
-    try {
-        const task = await Task.findOneAndUpdate(
-            {_id: req.params.id, user: req.user.id},
-            {$set: allowedUpdates(req.body)},
-            {new: true}
-        );
-        if (!task) {
-            return next(errorFactory(StatusCodes.NOT_FOUND, 'Task not found'));
-        }
-        await task.save();
-        sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
-    } catch (err) {
-        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR, err.message));
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
     }
-};
 
-exports.deleteTask = async (req, res, next) => {
     try {
-        const task = await Task.findOneAndDelete({_id: req.params.id, user: req.user.id});
-        if (!task) {
+        const {id} = req.params;
+        const {title, description, status} = req.body;
+
+        const taskData = {
+            title,
+            description,
+            status,
+        };
+
+        const updatedTask = await taskService.updateTask(id, req.user.id, taskData);
+
+        if (!updatedTask) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
-        } else {
-            sendResponse(res, StatusCodes.OK, formatTaskResponse(task))
         }
+
+        sendResponse(res, StatusCodes.OK, formatTaskResponse(updatedTask));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
 
-function validateRequest(req, next) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return next(errorFactory(StatusCodes.BAD_REQUEST, 'Validation error', errors.array()));
+exports.deleteTask = async (req, res, next) => {
+    try {
+        const {taskId} = req.params;
+        const isDeleted = await taskService.deleteTask(taskId, req.user.id);
+        if (!isDeleted) {
+            return next(errorFactory(StatusCodes.NOT_FOUND));
+        }
+
+        sendResponse(res, StatusCodes.OK);
+    } catch (err) {
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
-}
+};
 
 function formatTaskResponse(task) {
     return {
         id: task._id,
         title: task.title,
         description: task.description,
+        workspace: task.workspace,
         completed: task.completed,
         user: task.user,
     };
 }
-
-const allowedUpdates = (body) => {
-    const allowedFields = ['title', 'description', 'completed'];
-    const updates = {};
-
-    for (const field of allowedFields) {
-        if (body.hasOwnProperty(field)) {
-            updates[field] = body[field];
-        }
-    }
-
-    return updates;
-};
