@@ -14,12 +14,12 @@ exports.register = async (req, res, next) => {
         const {username, password} = req.body;
         const result = await userService.register(username, password);
 
-        if (result.created) {
-            let resData = formatUserResponse(result.user, result.accessToken, result.refreshToken);
-            sendResponse(res, StatusCodes.CREATED, resData);
-        } else {
-            next(errorFactory(StatusCodes.BAD_REQUEST, 'User already exists'));
+        if (!result.created) {
+            return next(errorFactory(StatusCodes.BAD_REQUEST, 'User already exists'));
         }
+        let resData = formatUserResponse(result.user, result.accessToken, result.refreshToken);
+        sendResponse(res, StatusCodes.CREATED, resData);
+
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
@@ -35,12 +35,12 @@ exports.login = async (req, res, next) => {
         const {username, password} = req.body;
         const result = await userService.login(username, password);
 
-        if (result.authenticated) {
-            let resData = formatUserResponse(result.user, result.accessToken, result.refreshToken);
-            sendResponse(res, StatusCodes.OK, resData);
-        } else {
-            next(errorFactory(StatusCodes.UNAUTHORIZED, "Invalid username or password"));
+        if (!result.authenticated) {
+            return next(errorFactory(StatusCodes.UNAUTHORIZED, "Invalid username or password"));
         }
+
+        let resData = formatUserResponse(result.user, result.accessToken, result.refreshToken);
+        sendResponse(res, StatusCodes.OK, resData);
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
@@ -59,12 +59,12 @@ exports.refreshToken = async (req, res, next) => {
 
     try {
         const result = await userService.refreshToken(refreshToken)
-        if (result.valid) {
-            let resData = formatUserResponse(result.user, result.newAccessToken, result.refreshToken);
-            sendResponse(res, StatusCodes.OK, resData);
-        } else {
-            next(errorFactory(StatusCodes.UNAUTHORIZED, "Invalid refresh token"));
+        if (!result.valid) {
+            return next(errorFactory(StatusCodes.UNAUTHORIZED, "Invalid refresh token"));
+
         }
+        let resData = formatUserResponse(result.user, result.newAccessToken, result.refreshToken);
+        sendResponse(res, StatusCodes.OK, resData);
 
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));

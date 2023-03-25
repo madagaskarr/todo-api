@@ -14,8 +14,8 @@ const app = express();
 app.use(express.json());
 app.use('/api/tasks', auth, taskRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/workspaces', auth, workspaceRoutes )
-app.use(invalidSyntaxMiddleware)
+app.use('/api/workspaces', auth, workspaceRoutes );
+app.use(invalidSyntaxMiddleware);
 app.use(errorMiddleware);
 
 process.on('unhandledRejection', (reason, promise) => {

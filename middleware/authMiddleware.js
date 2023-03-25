@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const config = require('config');
+const {errorFactory} = require("../utils/errorHandler");
+const {StatusCodes} = require("../utils/statusCodes");
 
 const authMiddleware = async (req, res, next) => {
     try {
@@ -8,13 +10,15 @@ const authMiddleware = async (req, res, next) => {
         const decoded = jwt.verify(token, config.get('JWT_SECRET'));
         const user = await User.findById(decoded.user.id);
 
-        if (!user) throw new Error('User not found');
+        if (!user) {
+            return next(errorFactory(StatusCodes.NOT_FOUND));
+        }
 
         req.user = user;
         req.token = token;
         next();
     } catch (error) {
-        res.status(401).json({ message: 'Please authenticate' });
+        return next(errorFactory(StatusCodes.UNAUTHORIZED));
     }
 };
 
