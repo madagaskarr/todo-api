@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 
-const RoleEnum = {
-    VIEWER: "viewer", EDITOR: "editor", ADMIN: "admin",
+const Role = {
+    ADMIN: 'admin',
+    MEMBER: 'member',
+    GUEST: 'guest',
 };
 
 const memberSchema = new mongoose.Schema({
@@ -12,8 +14,8 @@ const memberSchema = new mongoose.Schema({
     role:
     {
         type: String,
-        enum: Object.values(RoleEnum),
-        default: RoleEnum.EDITOR
+        enum: Object.values(Role),
+        default: Role.MEMBER
     },
 });
 
@@ -33,5 +35,5 @@ const workspaceSchema = new mongoose.Schema({
 const Workspace = mongoose.model('Workspace', workspaceSchema);
 module.exports = {
     Workspace,
-    RoleEnum,
+    Role,
 };
