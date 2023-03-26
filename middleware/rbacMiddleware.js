@@ -1,23 +1,22 @@
 const {errorFactory} = require("../utils/errorHandler");
 const {StatusCodes} = require("../utils/statusCodes");
-const {Workspace} = require("../models/workspaceModel");
 const {hasPermission} = require("../utils/roles");
+const workspaceService = require("../services/workspaceService");
 
-function validate(requiredPermission) {
+function validateTaskAccess(requiredPermission) {
     return async (req, res, next) => {
         const user = req.user.id;
-        const workspace = await Workspace.findById(req.body.workspace);
 
-        if (workspace) {
-            const workspaceMember = workspace.members.find(member => member.user.toString() === user);
-
-            if (workspaceMember && hasRequiredPermission(workspaceMember.role, requiredPermission)) {
-                return next();
-            }
-            return next(errorFactory(StatusCodes.FORBIDDEN));
+        if (!req.body.workspace) {
+            return next();
         }
 
-        return next();
+        const workspaceMember = await workspaceService.getWorkspaceMemberById(req.body.workspace, user);
+        if (workspaceMember && hasRequiredPermission(workspaceMember.role, requiredPermission)) {
+            return next();
+        }
+
+        return next(errorFactory(StatusCodes.FORBIDDEN));
     };
 }
 
@@ -26,4 +25,4 @@ function hasRequiredPermission(userRole, requiredPermission) {
 }
 
 
-module.exports = validate;
+module.exports = validateTaskAccess;

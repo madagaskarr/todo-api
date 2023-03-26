@@ -32,6 +32,14 @@ exports.getWorkspaceById = async (workspaceId, userId) => {
     return Workspace.findOne({_id: workspaceId, 'members.user': userId});
 };
 
+exports.getWorkspaceMemberById = async (workspaceId, userId) => {
+    const workspace = await Workspace.findOne({_id: workspaceId, 'members.user': userId});
+    if (workspace) {
+        return workspace.members.find(member => member.user.toString() === userId);
+    }
+    return null;
+};
+
 exports.updateWorkspace = async (workspaceId, userId, updates) => {
     return Workspace.findOneAndUpdate(
         {_id: workspaceId, owner: userId},
