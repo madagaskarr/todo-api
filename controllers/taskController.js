@@ -41,7 +41,22 @@ exports.getTasks = async (req, res, next) => {
 exports.getTask = async (req, res, next) => {
     try {
         const {id} = req.params;
-        const task = await taskService.getTask(id, req.user.id);
+        const task = await taskService.getTaskById(id);
+
+        if (!task) {
+            return next(errorFactory(StatusCodes.NOT_FOUND));
+        }
+
+        sendResponse(res, StatusCodes.OK, formatTaskResponse(task));
+    } catch (err) {
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
+    }
+};
+
+exports.getTaskById = async (req, res, next) => {
+    try {
+        const {id} = req.params;
+        const task = await taskService.getTaskById(id);
 
         if (!task) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
@@ -69,7 +84,7 @@ exports.updateTask = async (req, res, next) => {
             status,
         };
 
-        const updatedTask = await taskService.updateTask(id, req.user.id, taskData);
+        const updatedTask = await taskService.updateTask(id,  taskData);
 
         if (!updatedTask) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
@@ -83,8 +98,8 @@ exports.updateTask = async (req, res, next) => {
 
 exports.deleteTask = async (req, res, next) => {
     try {
-        const {taskId} = req.params;
-        const isDeleted = await taskService.deleteTask(taskId, req.user.id);
+        const {id} = req.params;
+        const isDeleted = await taskService.deleteTask(id);
         if (!isDeleted) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
         }

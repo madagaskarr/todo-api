@@ -1,4 +1,5 @@
 const Task = require("../models/taskModel");
+const {Workspace} = require("../models/workspaceModel");
 
 exports.createTask = async (user, taskData) => {
     const {title, description, workspace} = taskData;
@@ -15,14 +16,26 @@ exports.getTask = async (taskId, userId) => {
     return Task.findOne({_id: taskId, user: userId});
 };
 
-exports.updateTask = async (taskId, userId, updateData) => {
+exports.getTaskById = async (taskId) => {
+    return Task.findOne({_id: taskId});
+}
+
+exports.updateTask = async (taskId, updateData) => {
     return Task.findOneAndUpdate(
-        {_id: taskId, user: userId},
+        {_id: taskId},
         updateData,
         {new: true}
     );
 };
 
 exports.deleteTask = async (taskId, userId) => {
-    return Task.findOneAndDelete({_id: taskId, user: userId});
+    return Task.findOneAndDelete({_id: taskId});
 };
+
+exports.getWorkspaceByTaskId = async (taskId) => {
+    const task = await Task.findById(taskId);
+    if (task) {
+        return task.workspace;
+    }
+    return null;
+}

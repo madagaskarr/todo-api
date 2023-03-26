@@ -14,7 +14,6 @@ router.post(
 
 router.get(
     '/',
-    rbac(Permissions.TASK_VIEW),
     taskController.getTasks);
 
 router.get(

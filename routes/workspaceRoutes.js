@@ -10,5 +10,6 @@ router.get('/', workspaceController.getWorkspaces);
 router.get('/:id', objectIdValidator,workspaceController.getWorkspace);
 router.put('/:id', objectIdValidator, validator.validateWorkspace, workspaceController.updateWorkspace);
 router.delete('/:id', objectIdValidator, workspaceController.deleteWorkspace);
+router.post('/:id/members', objectIdValidator, workspaceController.addMember);
 
 module.exports = router;

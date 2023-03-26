@@ -68,7 +68,7 @@ exports.updateWorkspace = async (req, res, next) => {
 
 exports.deleteWorkspace = async (req, res, next) => {
     try {
-        const workspace = await Workspace.findOneAndDelete({_id: req.params.id, user: req.user.id});
+        const workspace = await  workspaceService.deleteWorkspace(req.params.id, req.user.id);
         if (!workspace) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
         } else {
@@ -78,6 +78,26 @@ exports.deleteWorkspace = async (req, res, next) => {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
 };
+
+exports.addMember = async (req, res, next) => {
+    try {
+        const {id} = req.params;
+        const userId = req.user.id;
+        const newMember = req.body.member;
+
+        const addedMember = await workspaceService.addMember(id, userId, newMember);
+
+        if (addedMember) {
+            sendResponse(res, StatusCodes.OK, addedMember)
+        } else {
+            return next(errorFactory(StatusCodes.FORBIDDEN));
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 
 function formatTaskResponse(workspace) {
     return {
