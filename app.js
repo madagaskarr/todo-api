@@ -4,7 +4,7 @@ const connectDB = require('./config/dbConfig');
 const taskRoutes = require('./routes/taskRoutes');
 const userRoutes = require('./routes/userRoutes');
 const workspaceRoutes = require('./routes/workspaceRoutes')
-const story = require('./routes/storyRoutes')
+const storyRoutes = require('./routes/storyRoutes')
 const auth = require('./middleware/authMiddleware');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const invalidSyntaxMiddleware = require('./middleware/invalidSyntaxMiddleware');
@@ -16,7 +16,7 @@ app.use(express.json());
 app.use('/api/tasks', auth, taskRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/workspaces', auth, workspaceRoutes )
-app.use('/api/story', auth, story)
+app.use('/api/story', auth, storyRoutes)
 app.use(invalidSyntaxMiddleware)
 app.use(errorMiddleware);
 

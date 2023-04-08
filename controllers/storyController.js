@@ -3,6 +3,7 @@ const {errorFactory} = require('../utils/errorHandler');
 const {sendResponse} = require('../utils/responseHandler');
 const {StatusCodes} = require("../utils/statusCodes");
 const {validationResult} = require("express-validator");
+const {Workspace, RoleEnum} = require("../models/workspaceModel");
 
 exports.createStory = async (req, res, next) => {
     validateRequest(req, next);
@@ -18,7 +19,7 @@ exports.createStory = async (req, res, next) => {
 
 exports.getStory = async (req, res, next) => {
     try {
-        const story = await Story.find({ user: req.user.id });
+        const story = await Story.find({ _id: req.params.id  });
         sendResponse(res, StatusCodes.OK, story.map(formatStoryResponse));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
@@ -27,17 +28,15 @@ exports.getStory = async (req, res, next) => {
 
 exports.updateStory = async (req, res, next) => {
     validateRequest(req, next);
-
     try {
-        const story = await Story.findOneAndUpdate(
-            { _id: req.params.id, user: req.user.id },
-            { $set: allowedUpdates(req.body) },
-            { new: true }
-        );
+        const story = await Story.findOneAndUpdate({ _id: req.params.id }, { $set: { title: req.body.title } },);
         if (!story) {
             return next(errorFactory(StatusCodes.NOT_FOUND, 'Story is not found'));
+        } else {
+            story.title = req.body.title;
+            const savedStory = await story.save();
+            sendResponse(res, StatusCodes.OK, formatStoryResponse(savedStory));
         }
-        sendResponse(res, StatusCodes.OK, formatStoryResponse(story));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR, err.message));
     }
