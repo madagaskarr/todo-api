@@ -68,3 +68,5 @@ function formatStoryResponse(story) {
         id: story._id,
         title: story.title,
         user: story.user
+    }
+}
