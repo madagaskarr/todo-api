@@ -9,8 +9,8 @@ const validateTask = [
 ];
 
 router.post('/', validateTask, storyController.createStory);
-router.get('/', storyController.getStory);
-router.get('/:id', storyController.getStory);
+router.get('/', storyController.getStories);
+router.get('/:id', storyController.getStoryById);
 router.put('/:id', validateTask, storyController.updateStory);
 router.delete('/:id', storyController.deleteStory);
 

@@ -17,10 +17,23 @@ exports.createStory = async (req, res, next) => {
     }
 };
 
-exports.getStory = async (req, res, next) => {
+exports.getStoryById = async (req, res, next) => {
     try {
-        const story = await Story.find({ _id: req.params.id  });
-        sendResponse(res, StatusCodes.OK, story.map(formatStoryResponse));
+        const story = await Story.findOne({_id: req.params.id, user: req.user.id});
+        if (!story) {
+            return next(errorFactory(StatusCodes.NOT_FOUND));
+        } else {
+            sendResponse(res, StatusCodes.OK, formatStoryResponse(story));
+        }
+    } catch (err) {
+        next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
+    }
+};
+
+exports.getStories = async (req, res, next) => {
+    try {
+        const stories = await Story.find({user: req.user.id});
+        sendResponse(res, StatusCodes.OK, stories.map(formatStoryResponse));
     } catch (err) {
         next(errorFactory(StatusCodes.INTERNAL_SERVER_ERROR));
     }
@@ -29,7 +42,7 @@ exports.getStory = async (req, res, next) => {
 exports.updateStory = async (req, res, next) => {
     validateRequest(req, next);
     try {
-        const story = await Story.findOneAndUpdate({ _id: req.params.id }, { $set: { title: req.body.title } },);
+        const story = await Story.findOneAndUpdate({_id: req.params.id}, {$set: {title: req.body.title}},);
         if (!story) {
             return next(errorFactory(StatusCodes.NOT_FOUND, 'Story is not found'));
         } else {
@@ -44,7 +57,7 @@ exports.updateStory = async (req, res, next) => {
 
 exports.deleteStory = async (req, res, next) => {
     try {
-        const story = await Story.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+        const story = await Story.findOneAndDelete({_id: req.params.id, user: req.user.id});
         if (!story) {
             return next(errorFactory(StatusCodes.NOT_FOUND));
         } else {
