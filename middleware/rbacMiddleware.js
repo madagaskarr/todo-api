@@ -1,42 +1,71 @@
 const {errorFactory} = require("../utils/errorHandler");
 const {StatusCodes} = require("../utils/statusCodes");
-const {hasPermission} = require("../utils/roles");
+const {defineAbilitiesFor, permissions} = require("../utils/roles");
 const workspaceService = require("../services/workspaceService");
 const taskService = require("../services/taskService");
 
-function validateTaskAccess(requiredPermission) {
+const Type = {
+    CREATE: "create_task",
+    GET_TASK: "get_task",
+    EDIT: "edit_task",
+    DELETE: "delete_task",
+};
+
+function validateTaskAccess(type) {
     return async (req, res, next) => {
-        const user = req.user.id;
-        const taskId = req.params.id;
 
-        const task = await taskService.getTaskById(taskId);
-        const taskWorkspaceId = task ? task.workspace : null;
-        const workspaceId = taskId ? taskWorkspaceId : req.body.workspace;
+        const userId = req.user.id;
+        let hasAccess;
 
-        // If the task is not found, return a 404 Not Found response
-        if (taskId && !task) {
-            return next(errorFactory(StatusCodes.NOT_FOUND));
+        switch (type) {
+            case Type.CREATE:
+                hasAccess = await createTask(userId, req.body.workspace);
+                break;
+
+            // case Type.GET_TASK:
+            //     getTask(userId, taskIdFromParam,);
+            //     break;
+            //
+            // case Type.EDIT:
+            //     editTask(userId,);
+            //     break;
+            //
+            // case Type.DELETE:
+            //     deleteTask(userId,);
+            //     break;
+
+            default:
+                const taskId = req.params.id
+                const workspace = await taskService.getWorkspaceByTaskId(taskId);
+                const id = workspace._id;
+                const workspaceMember = await workspaceService.getWorkspaceMemberById(id, userId);
+                const userRole = workspaceMember?.role;
+                const ability = defineAbilitiesFor(userRole);
+                hasAccess = ability.can(permissions.TASK_CREATE, "Task");
+                break;
         }
 
-        if (workspaceId) {
-            const workspaceMember = await workspaceService.getWorkspaceMemberById(workspaceId, user);
-            if (workspaceMember && hasRequiredPermission(workspaceMember.role, requiredPermission)) {
-                return next();
-            }
-        } else {
-            //User owner of the task
-            if (task && task.user.toString() === user) {
-                return next();
-            }
-        }
-
-        return next(errorFactory(StatusCodes.FORBIDDEN));
-    };
+        return hasAccess ? next() : next(errorFactory(StatusCodes.FORBIDDEN));
+    }
 }
 
-function hasRequiredPermission(userRole, requiredPermission) {
-    return hasPermission(userRole, requiredPermission);
+async function createTask(userID, workspaceId) {
+    const workspaceMember = await workspaceService.getWorkspaceMemberById(workspaceId, userID);
+    const userRole = workspaceMember?.role;
+    const ability = defineAbilitiesFor(userRole);
+    return ability.can(permissions.TASK_CREATE, "Task");
 }
 
+function getTask(userID, taskID, workspaceId) {
 
-module.exports = validateTaskAccess;
+}
+
+function editTask(userID, taskID, workspaceId) {
+
+}
+
+function deleteTask(userID, taskID, workspaceId) {
+
+}
+
+module.exports = {validateTaskAccess, Type};

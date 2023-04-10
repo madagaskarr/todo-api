@@ -2,14 +2,13 @@ const express = require('express');
 const taskController = require('../controllers/taskController');
 const taskValidator = require("../validators/taskValidator")
 const objectIdValidator = require("../middleware/objectIDMiddleware");
-const rbac = require("../middleware/rbacMiddleware")
-const {Permissions} = require("../utils/roles")
+const {validateTaskAccess, Type} = require("../middleware/rbacMiddleware")
 const router = express.Router();
 
 router.post(
     '/',
-    taskValidator.validateTask,
-    rbac(Permissions.TASK_CREATE),
+    taskValidator.validateTaskCreate,
+    validateTaskAccess(Type.CREATE),
     taskController.createTask);
 
 router.get(
@@ -19,20 +18,20 @@ router.get(
 router.get(
     '/:id',
     objectIdValidator,
-    rbac(Permissions.TASK_VIEW),
+    validateTaskAccess(Type.GET_TASK),
     taskController.getTask);
 
 router.put(
     '/:id',
     objectIdValidator,
-    taskValidator.validateTask,
-    rbac(Permissions.TASK_EDIT),
+    taskValidator.validateTaskModify,
+    validateTaskAccess(Type.EDIT),
     taskController.updateTask);
 
 router.delete(
     '/:id',
     objectIdValidator,
-    rbac(Permissions.TASK_DELETE),
+    validateTaskAccess(Type.DELETE),
     taskController.deleteTask);
 
 module.exports = router;

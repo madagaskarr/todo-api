@@ -4,7 +4,6 @@ const {StatusCodes} = require("../utils/statusCodes");
 const {validationResult} = require("express-validator");
 const taskService = require("../services/taskService")
 
-//TODO: Add access validation -> if user haven`t access to workspace task creation is forbidden
 exports.createTask = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -27,7 +26,6 @@ exports.createTask = async (req, res, next) => {
     }
 };
 
-//TODO: Add access validation -> if user haven`t access to workspace task get is forbidden
 //TODO: Add filtering by workspace || workspace && user
 exports.getTasks = async (req, res, next) => {
     try {

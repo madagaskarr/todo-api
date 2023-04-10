@@ -1,40 +1,59 @@
 const {Role} = require("../models/workspaceModel")
+const {AbilityBuilder, createMongoAbility} = require("@casl/ability");
 
-const Permissions = {
-    TASK_CREATE: 'create_task',
-    TASK_EDIT: 'edit_task',
-    TASK_DELETE: 'delete_task',
-    TASK_VIEW: 'view_task',
-    EDIT_WORKSPACE: 'edit_workspace',
-    DELETE_WORKSPACE: 'delete_workspace',
-    VIEW_WORKSPACE: 'view_workspace',
+const permissions = {
+    TASK_VIEW: "view_task",
+    TASK_CREATE: "create_task",
+    TASK_EDIT: "edit_task",
+    TASK_DELETE: "delete_task",
+    WORKSPACE_VIEW: "view_workspace",
+    WORKSPACE_CREATE: "create_workspace",
+    WORKSPACE_EDIT: "edit_workspace",
+    WORKSPACE_DELETE: "delete_workspace",
 };
 
-const rolePermissions = {
-    [Role.ADMIN]: [
-        Permissions.TASK_CREATE,
-        Permissions.TASK_EDIT,
-        Permissions.TASK_DELETE,
-        Permissions.TASK_VIEW,
-        Permissions.EDIT_WORKSPACE,
-        Permissions.DELETE_WORKSPACE,
-        Permissions.VIEW_WORKSPACE,
-    ],
-    [Role.MEMBER]: [
-        Permissions.TASK_CREATE,
-        Permissions.TASK_EDIT,
-        Permissions.TASK_DELETE,
-        Permissions.TASK_VIEW,
-        Permissions.EDIT_WORKSPACE,
-        Permissions.VIEW_WORKSPACE,
-    ],
-    [Role.GUEST]: [
-        Permissions.TASK_VIEW,
-        Permissions.VIEW_WORKSPACE],
-};
+function defineAbilitiesFor(role) {
+    const { can, cannot, build } = new AbilityBuilder(createMongoAbility);
 
-const hasPermission = (userRole, requiredPermission) => {
-    return rolePermissions[userRole].includes(requiredPermission);
-};
+    switch (role) {
+        case Role.ADMIN:
+            can(permissions.TASK_VIEW, "Task");
+            can(permissions.TASK_CREATE, "Task");
+            can(permissions.TASK_EDIT, "Task");
+            can(permissions.TASK_DELETE, "Task");
+            can(permissions.WORKSPACE_VIEW, "Workspace");
+            can(permissions.WORKSPACE_CREATE, "Workspace");
+            can(permissions.WORKSPACE_EDIT, "Workspace");
+            can(permissions.WORKSPACE_DELETE, "Workspace");
+            break;
 
-module.exports = {Permissions, hasPermission};
+        case Role.MEMBER:
+            can(permissions.TASK_VIEW, "Task");
+            can(permissions.TASK_CREATE, "Task");
+            can(permissions.TASK_EDIT, "Task");
+            can(permissions.TASK_DELETE, "Task");
+            can(permissions.WORKSPACE_VIEW, "Workspace");
+            can(permissions.WORKSPACE_CREATE, "Workspace");
+            can(permissions.WORKSPACE_EDIT, "Workspace");
+            cannot(permissions.WORKSPACE_DELETE, "Workspace");
+            break;
+
+        case Role.GUEST:
+            can(permissions.TASK_VIEW, "Task");
+            cannot(permissions.TASK_CREATE, "Task");
+            cannot(permissions.TASK_EDIT, "Task");
+            cannot(permissions.TASK_DELETE, "Task");
+            can(permissions.WORKSPACE_VIEW, "Workspace");
+            cannot(permissions.WORKSPACE_CREATE, "Workspace");
+            cannot(permissions.WORKSPACE_EDIT, "Workspace");
+            cannot(permissions.WORKSPACE_DELETE, "Workspace");
+            break;
+
+        default:
+            cannot("*");
+    }
+
+    return build();
+}
+
+module.exports = { defineAbilitiesFor, permissions };
