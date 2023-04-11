@@ -3,7 +3,6 @@ const request = require("supertest");
 const config = require("config");
 const app = require('../app')
 // const testingDb = require('testing_db')
-require("dotenv").config();
 
 describe("End to End Integration Tests Suite ", () => {
 
@@ -12,12 +11,10 @@ describe("End to End Integration Tests Suite ", () => {
     });
 
     afterEach(async () => {
-        // Drop the database
         await mongoose.connection.db.dropDatabase();
     });
 
     afterAll(async () => {
-        // Drop the database
         await mongoose.connection.close();
     });
 
