@@ -79,4 +79,34 @@ describe("End to End Integration Tests Suite ", () => {
         expect(res.header['content-type']).toBe('application/json; charset=utf-8');
         expect(res.statusCode).toBe(201);
     });
+
+    it("should get all workspaces of the user", async () => {
+
+        // Arrange
+        const responseFromRegistration = await request(app).post("/api/users/register").send({
+            username: "me@tigranes.io",
+            password: "Pass1234!",
+        });
+
+        const accessToken = responseFromRegistration.body.accessToken;
+        const userId = responseFromRegistration.body.id;
+
+        await request(app)
+            .post("/api/workspaces/")
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({
+                name: "My First Workspace",
+            });
+
+        // Act
+        const res = await request(app)
+            .get("/api/workspaces/")
+            .set('Authorization', `Bearer ${accessToken}`)
+
+        // Assert
+        expect(res.header['content-type']).toBe('application/json; charset=utf-8');
+        expect(res.statusCode).toBe(200);
+        expect(res.body[0].name).toBe("My First Workspace");
+        expect(res.body[0].owner).toBe(userId);
+    });
 });
