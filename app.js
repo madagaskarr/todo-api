@@ -34,3 +34,5 @@ app.listen(PORT, (error) => {
         console.log(`Server running on port ${PORT} in ${config.get('NODE_ENV')} mode`);
     }
 });
+
+module.exports = app;
