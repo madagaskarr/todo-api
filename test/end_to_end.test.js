@@ -161,6 +161,8 @@ describe("End to End Integration Tests Suite ", () => {
         expect(gevorWorkspacesResponse.body.length).toBe(1);
         expect(gevorWorkspacesResponse.body[0].name).toBe("My First Workspace created By Gevor");
         expect(gevorWorkspacesResponse.body[0].owner).toBe(gevorUserId);
+        expect(gevorWorkspacesResponse.body[0].members[0].user).toBe(gevorUserId);
+        expect(gevorWorkspacesResponse.body[0].members[0].role).toBe("admin");
 
         // Tigran
         expect(tigranWorkspacesResponse.header['content-type']).toBe('application/json; charset=utf-8');
@@ -168,6 +170,8 @@ describe("End to End Integration Tests Suite ", () => {
         expect(tigranWorkspacesResponse.body.length).toBe(1);
         expect(tigranWorkspacesResponse.body[0].name).toBe("My First Workspace created By Tigran");
         expect(tigranWorkspacesResponse.body[0].owner).toBe(tigranUserId);
+        expect(tigranWorkspacesResponse.body[0].members[0].user).toBe(tigranUserId);
+        expect(tigranWorkspacesResponse.body[0].members[0].role).toBe("admin");
 
         // Tigran Unauthorised
         expect(tigranUnauthorisedWorkspacesResponse.header['content-type']).toBe('application/json; charset=utf-8');
