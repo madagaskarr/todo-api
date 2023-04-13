@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(invalidSyntaxMiddleware);
 app.use('/api/tasks', auth, taskRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/workspaces', auth, workspaceRoutes );
+app.use('/api/workspaces', auth, workspaceRoutes);
 app.use(errorMiddleware);
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -34,3 +34,5 @@ app.listen(PORT, (error) => {
         console.log(`Server running on port ${PORT} in ${config.get('NODE_ENV')} mode`);
     }
 });
+
+module.exports = app;

@@ -104,5 +104,6 @@ function formatTaskResponse(workspace) {
         id: workspace._id,
         name: workspace.name,
         owner: workspace.owner,
+        members: workspace.members,
     };
 }
